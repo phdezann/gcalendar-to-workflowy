@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2029
+
+set -e -u
+
+host="fly"
+service_name="cn-calendar"
+
+echo "Restarting service..."
+ssh "${host}" "sudo systemctl restart ${service_name}"
+
+echo "Tailing logs..."
+ssh "${host}" "sudo journalctl -n 100 -f -u ${service_name}"
