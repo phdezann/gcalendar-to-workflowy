@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.Optional;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.phdezann.cn.core.Config.ConfigKey;
@@ -33,8 +32,12 @@ public class WorkflowyClient {
         private String result;
     }
 
-    public UpdateResult updateBullet(String name, String note, Optional<String> itemId) {
-        var url = buildUrl(name, note, itemId.orElse(""));
+    public UpdateResult createBullet(String name, String note) {
+        return updateBullet(name, note, "");
+    }
+
+    public UpdateResult updateBullet(String name, String note, String itemId) {
+        var url = buildUrl(name, note, itemId);
         var json = getContent(url);
         return jsonSerializer.readValue(json, UpdateResult.class);
     }

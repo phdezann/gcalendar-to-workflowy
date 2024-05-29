@@ -85,9 +85,9 @@ public class EventFormatter {
 
     private LocalDate toLocalDate(EventDateTime eventDateTime) {
         if (isDateOnly(eventDateTime)) {
-            return LocalDate.parse(eventDateTime.getDate().toStringRfc3339());
+            return DateTimeConverter.toLocalDate(eventDateTime.getDate());
         } else {
-            return ZonedDateTime.parse(eventDateTime.getDateTime().toStringRfc3339()).toLocalDate();
+            return DateTimeConverter.toZonedDateTime(eventDateTime.getDateTime()).toLocalDate();
         }
     }
 
@@ -95,7 +95,7 @@ public class EventFormatter {
         if (isDateOnly(eventDateTime)) {
             throw new RuntimeException("Must be a datetime");
         }
-        return ZonedDateTime.parse(eventDateTime.getDateTime().toStringRfc3339());
+        return DateTimeConverter.toZonedDateTime(eventDateTime.getDateTime());
     }
 
     private String getHostname() {

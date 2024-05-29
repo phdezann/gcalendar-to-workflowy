@@ -1,7 +1,16 @@
 package org.phdezann.cn.core;
 
+import static org.phdezann.cn.core.DateTimeConverter.toZonedDateTime;
+
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
+import org.phdezann.cn.core.EventFormatter.WorkflowyBullet;
 import org.phdezann.cn.core.LinkParser.WorkflowyLink;
+import org.phdezann.cn.core.WorkflowyClient.UpdateResult;
+
+import com.google.api.services.calendar.model.Event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +46,11 @@ public class EventCreator {
 
                     var description = event.getDescription();
                     var workflowyLink = linkParser.extractWorkflowyLink(description);
-                    var bulletId = workflowyLink.map(WorkflowyLink::getBulletId);
+                    var bulletIdInDesc = workflowyLink.map(WorkflowyLink::getBulletId);
+                    var currentBulletId = createOrUpdateBullet(event, workflowyBullet, bulletIdInDesc).getId();
                     var result = workflowyClient.updateBullet(workflowyBullet.getTitle(), //
                             workflowyBullet.getNote(), //
-                            bulletId);
+                            currentBulletId);
 
                     var updatedDescription = descriptionUpdater.update(description, result.getId(), workflowyLink);
                     if (!StringUtils.equals(updatedDescription, description)) {
@@ -48,6 +58,25 @@ public class EventCreator {
                         log.info("Updated description for event#{}", event.getId());
                     }
                 });
+    }
+
+    private UpdateResult createOrUpdateBullet(Event event, WorkflowyBullet workflowyBullet,
+            Optional<String> bulletIdInDesc) {
+        var title = workflowyBullet.getTitle();
+        var note = workflowyBullet.getNote();
+
+        if (bulletIdInDesc.isEmpty() || isNewlyCreatedEvent(event)) {
+            return workflowyClient.createBullet(title, note);
+        } else {
+            return workflowyClient.updateBullet(title, note, bulletIdInDesc.orElseThrow());
+        }
+    }
+
+    private boolean isNewlyCreatedEvent(Event event) {
+        var created = toZonedDateTime(event.getCreated());
+        var updated = toZonedDateTime(event.getUpdated());
+        var diffInSeconds = ChronoUnit.SECONDS.between(created, updated);
+        return diffInSeconds == 0;
     }
 
 }
