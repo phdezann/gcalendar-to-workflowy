@@ -26,13 +26,19 @@ public class EventCreator {
     private final LinkParser linkParser;
     private final DescriptionUpdater descriptionUpdater;
 
-    public void onNotification(String channelId) {
+    public synchronized void onNotification(String channelId) {
         log.trace("Got notification for channelId#{}", channelId);
         channelCache.getAllValues() //
                 .stream() //
                 .filter(cacheValue -> cacheValue.getChannelId().equals(channelId)) //
                 .findAny() //
                 .ifPresent(cacheValue -> createEvent(cacheValue.getCalendarId()));
+    }
+
+    public synchronized void createEventOnStartup() {
+        log.info("Creating events on startup");
+        channelCache.getAllValues() //
+                .forEach(cacheValue -> createEvent(cacheValue.getCalendarId()));
     }
 
     private void createEvent(String calendarId) {

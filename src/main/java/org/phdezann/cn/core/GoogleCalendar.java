@@ -73,7 +73,7 @@ public class GoogleCalendar {
                 log.debug("Getting all events from {}", nowMinus1Min);
                 request.setUpdatedMin(nowMinus1Min);
             } else {
-                log.debug("Using previously received 'SyncToken'");
+                log.debug("Using previously received 'SyncToken' for calendar#{}", calendarId);
                 request.setSyncToken(syncToken.orElseThrow());
             }
             var events = request.execute();

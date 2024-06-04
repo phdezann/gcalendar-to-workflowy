@@ -41,11 +41,11 @@ public class Application {
         var workflowyUpdater = new WorkflowyClient(appArgs, config, jsonDeserializer);
         var linkParser = new LinkParser();
         var descriptionUpdater = new DescriptionUpdater(linkParser);
-        var workflowyEventCreator = //
+        var eventCreator = //
                 new EventCreator(googleCalendarClient, channelCache, eventFormatter, workflowyUpdater, linkParser,
                         descriptionUpdater);
         var terminationLock = new TerminationLock();
-        var mqttSubscriber = new MqttSubscriber(terminationLock, jsonDeserializer, config, workflowyEventCreator);
+        var mqttSubscriber = new MqttSubscriber(terminationLock, jsonDeserializer, config, eventCreator);
         var nodeForker = new NodeServerForker(config, terminationLock);
 
         if (appArgs.isInitTokens()) {
@@ -60,6 +60,7 @@ public class Application {
         pushNotificationRenewer.startScheduler();
         nodeForker.startNodeServer();
         mqttSubscriber.startReadingMessagesAsync();
+        eventCreator.createEventOnStartup();
 
         terminationLock.waitForAbnormalTermination();
 
