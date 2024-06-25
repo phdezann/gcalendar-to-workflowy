@@ -60,7 +60,8 @@ public class Application {
         pushNotificationRenewer.startScheduler();
         nodeForker.startNodeServer();
         mqttSubscriber.startReadingMessagesAsync();
-        eventCreator.createEventOnStartup();
+        eventCreator.createEventsOnStartup();
+        eventCreator.setupEventsEveryDay();
 
         terminationLock.waitForAbnormalTermination();
 

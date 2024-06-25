@@ -2,8 +2,13 @@ package org.phdezann.cn.core;
 
 import static org.phdezann.cn.core.DateTimeConverter.toZonedDateTime;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.phdezann.cn.core.EventFormatter.WorkflowyBullet;
@@ -25,6 +30,7 @@ public class EventCreator {
     private final WorkflowyClient workflowyClient;
     private final LinkParser linkParser;
     private final DescriptionUpdater descriptionUpdater;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public synchronized void onNotification(String channelId) {
         log.trace("Got notification for channelId#{}", channelId);
@@ -32,16 +38,16 @@ public class EventCreator {
                 .stream() //
                 .filter(cacheValue -> cacheValue.getChannelId().equals(channelId)) //
                 .findAny() //
-                .ifPresent(cacheValue -> createEvent(cacheValue.getCalendarId()));
+                .ifPresent(cacheValue -> createEvents(cacheValue.getCalendarId()));
     }
 
-    public synchronized void createEventOnStartup() {
-        log.info("Creating events on startup");
+    public synchronized void createEventsOnStartup() {
+        log.info("Synchronizing events with no notification");
         channelCache.getAllValues() //
-                .forEach(cacheValue -> createEvent(cacheValue.getCalendarId()));
+                .forEach(cacheValue -> createEvents(cacheValue.getCalendarId()));
     }
 
-    private void createEvent(String calendarId) {
+    private void createEvents(String calendarId) {
         googleCalendar.getEvents(calendarId) //
                 .stream() //
                 .filter(event -> event.getStatus().equals("confirmed")) //
@@ -83,6 +89,29 @@ public class EventCreator {
         var updated = toZonedDateTime(event.getUpdated());
         var diffInSeconds = ChronoUnit.SECONDS.between(created, updated);
         return diffInSeconds == 0;
+    }
+
+    public void setupEventsEveryDay() {
+        var now = ZonedDateTime.now();
+
+        var todayAt0630 = now //
+                .withHour(6) //
+                .withMinute(30) //
+                .withSecond(0) //
+                .withNano(0);
+        scheduleEveryDay(todayAt0630, this::createEventsOnStartup);
+    }
+
+    private void scheduleEveryDay(ZonedDateTime tick, Runnable command) {
+        var now = ZonedDateTime.now();
+        if (tick.isBefore(now)) {
+            tick = tick.plusDays(1);
+        }
+        var delay = Duration.between(now, tick).getSeconds();
+
+        var oneDayInSeconds = 60 * 60 * 24;
+        scheduler //
+                .scheduleWithFixedDelay(command, delay, oneDayInSeconds, TimeUnit.SECONDS);
     }
 
 }
