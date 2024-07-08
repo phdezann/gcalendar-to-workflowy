@@ -50,7 +50,7 @@ public class PushNotificationRenewer {
 
     private void renewIfExpired() {
         if (!IOUtils.isUrlReachable("https://oauth2.googleapis.com")) {
-            log.trace("Cannot reach mandatory server for accessing Google's API, skipping");
+            log.debug("Cannot reach mandatory server for accessing Google's API, skipping");
             return;
         }
         try {
@@ -63,6 +63,7 @@ public class PushNotificationRenewer {
     }
 
     private void renewIfExpired(String calendarId) {
+        log.info("Initiating watch renew (if expired) for calendar#{}", calendarId);
         var channelOpt = channelCache //
                 .getAllValues() //
                 .stream() //
@@ -76,7 +77,7 @@ public class PushNotificationRenewer {
             var now = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
             var expiration = channel.getExpiration();
             var diffInMinutes = ChronoUnit.MINUTES.between(now, expiration);
-            log.trace("Diff in minutes between '{}' and '{}': {}", now, expiration, diffInMinutes);
+            log.info("Diff in minutes between '{}' and '{}': {}", now, expiration, diffInMinutes);
             if (diffInMinutes < MINS_BEFORE_RENEWAL) {
                 log.info("Channel for calendar#{} is about to expire, renewing it before expiration on {}", calendarId,
                         expiration.toString());
