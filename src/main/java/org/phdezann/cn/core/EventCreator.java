@@ -5,6 +5,7 @@ import static org.phdezann.cn.core.DateTimeConverter.toZonedDateTime;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class EventCreator {
+
+    private static final String CONFIRMED_STATUS = "confirmed";
+    private static final String CANCELLED_STATUS = "cancelled";
 
     private final GoogleCalendar googleCalendar;
     private final ChannelCache channelCache;
@@ -48,28 +52,45 @@ public class EventCreator {
     }
 
     private void createEvents(String calendarId) {
-        googleCalendar.getEvents(calendarId) //
-                .stream() //
-                .filter(event -> event.getStatus().equals("confirmed")) //
-                .forEach(event -> {
-                    log.info("Event#{} '{}' to be synced", event.getId(), event.getSummary());
+        googleCalendar //
+                .getEvents(calendarId) //
+                .forEach(event -> createEvent(calendarId, event));
+    }
 
-                    var workflowyBullet = eventFormatter.format(event);
+    private void createEvent(String calendarId, Event event) {
+        if (!List.of(CONFIRMED_STATUS, CANCELLED_STATUS).contains(event.getStatus())) {
+            log.warn("Ignoring event with status {}", event.getStatus());
+            return;
+        }
 
-                    var description = event.getDescription();
-                    var workflowyLink = linkParser.extractWorkflowyLink(description);
-                    var bulletIdInDesc = workflowyLink.map(WorkflowyLink::getBulletId);
-                    var currentBulletId = createOrUpdateBullet(event, workflowyBullet, bulletIdInDesc).getId();
-                    var result = workflowyClient.updateBullet(workflowyBullet.getTitle(), //
-                            workflowyBullet.getNote(), //
-                            currentBulletId);
+        if (event.getStatus().equals(CANCELLED_STATUS)) {
+            event = googleCalendar.getEvent(calendarId, event.getId());
+        }
 
-                    var updatedDescription = descriptionUpdater.update(description, result.getId(), workflowyLink);
-                    if (!StringUtils.equals(updatedDescription, description)) {
-                        googleCalendar.updateDescription(calendarId, event.getId(), updatedDescription);
-                        log.info("Updated description for event#{}", event.getId());
-                    }
-                });
+        log.info("Event#{} '{}' '{}' to be synced", event.getId(), event.getSummary(), event.getStatus());
+
+        var description = event.getDescription();
+        var workflowyLink = linkParser.extractWorkflowyLink(description);
+        var bulletIdInDesc = workflowyLink.map(WorkflowyLink::getBulletId);
+        var workflowyBullet = formatWorkflowyBullet(event);
+        var currentBulletId = createOrUpdateBullet(event, workflowyBullet, bulletIdInDesc).getId();
+        var result = workflowyClient.updateBullet(workflowyBullet.getTitle(), //
+                workflowyBullet.getNote(), //
+                currentBulletId);
+
+        var updatedDescription = descriptionUpdater.update(description, result.getId(), workflowyLink);
+        if (!StringUtils.equals(updatedDescription, description)) {
+            googleCalendar.updateDescription(calendarId, event.getId(), updatedDescription);
+            log.info("Updated description for event#{}", event.getId());
+        }
+    }
+
+    private WorkflowyBullet formatWorkflowyBullet(Event event) {
+        return switch (event.getStatus()) {
+        case CONFIRMED_STATUS -> eventFormatter.formatConfirmed(event);
+        case CANCELLED_STATUS -> eventFormatter.formatCancelledEvent(event);
+        default -> throw new IllegalArgumentException();
+        };
     }
 
     private UpdateResult createOrUpdateBullet(Event event, WorkflowyBullet workflowyBullet,
@@ -78,8 +99,10 @@ public class EventCreator {
         var note = workflowyBullet.getNote();
 
         if (bulletIdInDesc.isEmpty() || isNewlyCreatedEvent(event)) {
+            System.out.println("Create bullet");
             return workflowyClient.createBullet(title, note);
         } else {
+            System.out.println("Update bullet");
             return workflowyClient.updateBullet(title, note, bulletIdInDesc.orElseThrow());
         }
     }

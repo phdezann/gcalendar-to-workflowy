@@ -84,6 +84,14 @@ public class GoogleCalendar {
         }
     }
 
+    public Event getEvent(String calendarId, String eventId) {
+        try {
+            return calendar.events().get(calendarId, eventId).execute();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     public void updateDescription(String calendarId, String eventId, String description) {
         try {
             var event = calendar.events().get(calendarId, eventId).execute();

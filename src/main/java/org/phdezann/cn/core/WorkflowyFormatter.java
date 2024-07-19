@@ -7,6 +7,10 @@ public class WorkflowyFormatter {
         SKY
     }
 
+    public static String bold(String text) {
+        return String.format("<b>%s</b>", text);
+    }
+
     public static String colored(String text, COLOR color) {
         return String.format("<span class=\"colored c-%s\">%s</span>", color.name().toLowerCase(), text);
     }

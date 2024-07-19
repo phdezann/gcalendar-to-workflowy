@@ -1,5 +1,6 @@
 package org.phdezann.cn.core;
 
+import static org.phdezann.cn.core.WorkflowyFormatter.bold;
 import static org.phdezann.cn.core.WorkflowyFormatter.colored;
 
 import java.net.InetAddress;
@@ -28,9 +29,17 @@ public class EventFormatter {
 
     }
 
-    public WorkflowyBullet format(Event event) {
+    public WorkflowyBullet formatConfirmed(Event event) {
         var title = buildTitle(event);
         var note = buildNote(event);
+        return new WorkflowyBullet(title, note);
+    }
+
+    public WorkflowyBullet formatCancelledEvent(Event event) {
+        var bullet = formatConfirmed(event);
+        var title = bullet.getTitle();
+        var note = bullet.getNote();
+        title = String.format("%s %s", bold(colored("[CANCELLED]", COLOR.GRAY)), title);
         return new WorkflowyBullet(title, note);
     }
 

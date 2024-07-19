@@ -22,7 +22,7 @@ class EventFormatterTest {
                 "2024-04-17T13:10:00+02:00", //
                 "https://www.google.com/calendar/event?eid=Mzlk");
 
-        var bullet = eventFormatter.format(event);
+        var bullet = eventFormatter.formatConfirmed(event);
 
         assertThat(bullet.getTitle()) //
                 .startsWith("" //
@@ -44,7 +44,7 @@ class EventFormatterTest {
                 "2024-04-17", //
                 "https://www.google.com/calendar/event?eid=Mzlk");
 
-        var bullet = eventFormatter.format(event);
+        var bullet = eventFormatter.formatConfirmed(event);
 
         assertThat(bullet.getTitle()) //
                 .startsWith("" //
@@ -64,7 +64,7 @@ class EventFormatterTest {
                 "2024-04-15T13:30:00+02:00", //
                 "https://www.google.com/calendar/event?eid=Mzlk");
 
-        var bullet = eventFormatter.format(event);
+        var bullet = eventFormatter.formatConfirmed(event);
 
         assertThat(bullet.getTitle()) //
                 .startsWith("" //
@@ -86,7 +86,7 @@ class EventFormatterTest {
                 "2024-04-16", // for Google Calendar, for a whole day event, the end date is the day after
                 "https://www.google.com/calendar/event?eid=Mzlk");
 
-        var bullet = eventFormatter.format(event);
+        var bullet = eventFormatter.formatConfirmed(event);
 
         assertThat(bullet.getTitle()) //
                 .startsWith("" //

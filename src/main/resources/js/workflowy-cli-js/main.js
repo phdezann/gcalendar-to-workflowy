@@ -19,12 +19,6 @@ function deep_find_by_id(item, id) {
     return result.item
 }
 
-function ensure_tag(item, tag) {
-    if (!item.name.includes(tag)) {
-        item.setName(`${item.name} ${tag}`)
-    }
-}
-
 function update_item(options, item) {
     item //
         .setName(options.name) //
@@ -53,27 +47,25 @@ async function update(options, document) {
     if (options.itemId) {
         const result = deep_find_by_id(rootList, options.itemId);
         if (result) {
-            return update_bullet(options, result, options.config.newTag)
+            return update_bullet(options, result)
         } else {
-            return create_bullet(options, inboxBullet, options.config.updateTag)
+            return create_bullet(options, inboxBullet)
         }
     } else {
-        return create_bullet(options, inboxBullet, options.config.newTag)
+        return create_bullet(options, inboxBullet)
     }
 }
 
-async function create_bullet(options, inboxBullet, tag) {
+async function create_bullet(options, inboxBullet) {
     const newItem = inboxBullet.createItem();
     update_item(options, newItem)
-    ensure_tag(newItem, tag)
     return to_result(newItem.id, Results.CREATED)
 }
 
-async function update_bullet(options, currentBullet, tag) {
+async function update_bullet(options, currentBullet) {
     currentBullet //
         .setName(options.name) //
         .setNote(options.note)
-    ensure_tag(currentBullet, tag)
     return to_result(currentBullet.id, Results.UPDATED)
 }
 
@@ -107,9 +99,7 @@ app.get('/update', (req, res) => {
         config: {
             newItemParentId: completeConfig.WORKFLOWY_NEW_ITEM_PARENT_ID,
             workflowyUsername: completeConfig.WORKFLOWY_USERNAME,
-            workflowyPassword: completeConfig.WORKFLOWY_PASSWORD,
-            newTag: completeConfig.NEW_TAG,
-            updateTag: completeConfig.UPDATE_TAG,
+            workflowyPassword: completeConfig.WORKFLOWY_PASSWORD
 
         },
         itemId: req.query.itemId
