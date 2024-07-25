@@ -31,7 +31,6 @@ class EventFormatterTest {
                         + colored("15 avril 2024 au 17 avril 2024", COLOR.SKY));
         assertThat(bullet.getNote()) //
                 .isEqualTo("" //
-                        + "     " //
                         + colored("13:10", COLOR.SKY) //
                         + " | " //
                         + toHref("https://www.google.com/calendar/event?eid=Mzlk", "Lien"));
@@ -53,7 +52,6 @@ class EventFormatterTest {
                         + colored("15 avril 2024 au 17 avril 2024", COLOR.SKY));
         assertThat(bullet.getNote()) //
                 .isEqualTo("" //
-                        + "     " //
                         + toHref("https://www.google.com/calendar/event?eid=Mzlk", "Lien"));
     }
 
@@ -73,7 +71,6 @@ class EventFormatterTest {
                             + colored("15 avril 2024", COLOR.SKY));
         assertThat(bullet.getNote()) //
                 .isEqualTo("" //
-                           + "     " //
                            + colored("13:10", COLOR.SKY) //
                            + " | " //
                            + toHref("https://www.google.com/calendar/event?eid=Mzlk", "Lien"));
@@ -95,7 +92,6 @@ class EventFormatterTest {
                             + colored("15 avril 2024", COLOR.SKY));
         assertThat(bullet.getNote()) //
                 .isEqualTo("" //
-                           + "     " //
                            + toHref("https://www.google.com/calendar/event?eid=Mzlk", "Lien"));
     }
 

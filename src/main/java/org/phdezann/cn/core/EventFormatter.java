@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.phdezann.cn.core.WorkflowyFormatter.COLOR;
 
 import com.google.api.services.calendar.model.Event;
@@ -67,11 +68,13 @@ public class EventFormatter {
         var start = event.getStart();
         var end = event.getEnd();
         var htmlLink = String.format("<a href=\"%s\">Lien</a>", event.getHtmlLink());
+        var prefixLength = NotePrefixLengthFinder.findPrefixLength(event.getSummary());
+        var prefix = StringUtils.repeat(" ", prefixLength);
         if (isDateOnly(start) && isDateOnly(end)) {
-            return String.format("     %s", htmlLink);
+            return String.format("%s%s", prefix, htmlLink);
         } else {
             var time = toZonedDateTime(start).format(DateTimeFormatter.ofPattern("HH:mm"));
-            return String.format("     %s | %s", colored(time, COLOR.SKY), htmlLink);
+            return String.format("%s%s | %s", prefix, colored(time, COLOR.SKY), htmlLink);
         }
     }
 
