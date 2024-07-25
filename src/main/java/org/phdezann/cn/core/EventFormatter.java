@@ -51,7 +51,7 @@ public class EventFormatter {
 
         var dayStart = getDay(start);
         var dayEnd = isSameDay(start, end) ? Optional.<String> empty() : Optional.of(getDay(end));
-        var hostname = "#build-on-" + getHostname();
+        var hostname = "#" + getHostname();
         var dayInfo = getDayInfo(dayStart, dayEnd);
 
         return String.format("%s | %s %s", colored(summary, COLOR.GRAY), colored(dayInfo, COLOR.SKY), hostname);
