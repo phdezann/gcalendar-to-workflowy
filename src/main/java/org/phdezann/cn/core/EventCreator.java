@@ -5,7 +5,9 @@ import static org.phdezann.cn.core.model.EventStatusEnum.OTHER;
 
 import java.io.File;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -79,10 +81,26 @@ public class EventCreator {
             return;
         }
 
+        var obsolete = isObsolete(event);
+        if (obsolete) {
+            log.info("Event#{} obsolete, no update", event.getId());
+            return;
+        }
+
         log.info("Event#{} '{}' '{}' to be synced", event.getId(), event.getSummary().orElse(""), event.getStatus());
         var workflowyBullet = formatWorkflowyBullet(event);
         var bulletId = createOrUpdateBullet(event, workflowyBullet);
         log.info("Bullet#{} in sync", bulletId);
+    }
+
+    private boolean isObsolete(Event event) {
+        var diffInDays = ChronoUnit.DAYS.between(getEndDate(event), LocalDate.now());
+        return diffInDays > 7;
+    }
+
+    private LocalDate getEndDate(Event event) {
+        var end = event.getEnd();
+        return end.isDateValue() ? end.getDate() : end.getTime().toLocalDate();
     }
 
     private void dumpEvent(com.google.api.services.calendar.model.Event event) {
@@ -99,9 +117,9 @@ public class EventCreator {
 
     private WorkflowyBullet formatWorkflowyBullet(Event event) {
         return switch (event.getStatus()) {
-        case CONFIRMED -> eventFormatter.formatConfirmed(event);
-        case CANCELLED -> eventFormatter.formatCancelledEvent(event);
-        default -> throw new IllegalArgumentException();
+            case CONFIRMED -> eventFormatter.formatConfirmed(event);
+            case CANCELLED -> eventFormatter.formatCancelledEvent(event);
+            default -> throw new IllegalArgumentException();
         };
     }
 
@@ -120,7 +138,7 @@ public class EventCreator {
     private boolean hasChanged(WorkflowyBullet workflowyBullet, Optional<CacheValue> cachedValue) {
         return cachedValue.stream() //
                 .noneMatch(elt -> StringUtils.equals(elt.bulletTitle(), workflowyBullet.title()) //
-                        && StringUtils.equals(elt.bulletNote(), workflowyBullet.note()));
+                                  && StringUtils.equals(elt.bulletNote(), workflowyBullet.note()));
     }
 
     private void updateCache(String eventId, String bulletId, WorkflowyBullet workflowyBullet) {
