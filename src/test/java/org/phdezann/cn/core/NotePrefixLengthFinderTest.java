@@ -38,4 +38,12 @@ class NotePrefixLengthFinderTest {
         assertThat(NotePrefixLengthFinder.findPrefixLength(Optional.empty())).isEqualTo(0);
     }
 
+    @Test
+    void findPrefixLength_ascii() {
+        for (char c = '0'; c <= 127; c++) {
+            var value = c + "abc";
+            assertThat(NotePrefixLengthFinder.findPrefixLength(Optional.of(value))).isEqualTo(0);
+        }
+    }
+
 }
