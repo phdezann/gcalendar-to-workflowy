@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Application (gcalendar-to-workflowy)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.phdezann.cn.Application" />
+    <module name="cn-calendar" />
+    <option name="PROGRAM_PARAMETERS" value="--config-file /opt/phdezann/gcalendar-to-workflowy/config-gcalendar-to-workflowy.json --cache-dir /opt/phdezann/gcalendar-to-workflowy/cache --token-dir /opt/phdezann/gcalendar-to-workflowy/private/tokens --credentials-json-file /opt/phdezann/gcalendar-to-workflowy/private/credentials.json" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.phdezann.cn.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
