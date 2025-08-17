@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Application (phdezanneau)" type="Application" factoryName="Application">
+  <configuration default="false" name="Application (calendrier phdezanneau)" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="org.phdezann.cn.Application" />
     <module name="cn-calendar" />
     <option name="PROGRAM_PARAMETERS" value="--config-file /opt/phdezann/gcalendar-to-workflowy/config-phdezanneau.json --cache-dir /opt/phdezann/gcalendar-to-workflowy/cache --token-dir /opt/phdezann/gcalendar-to-workflowy/private/tokens --credentials-json-file /opt/phdezann/gcalendar-to-workflowy/private/credentials.json" />
