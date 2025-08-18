@@ -7,16 +7,21 @@ import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MqttClientCallback implements MqttCallback {
 
     @Override
     public void disconnected(MqttDisconnectResponse disconnectResponse) {
-        // nothing to do by default
+        log.error("disconnected called, exiting.");
+        System.exit(1);
     }
 
     @Override
     public void mqttErrorOccurred(MqttException exception) {
-        // nothing to do by default
+        log.error("mqttErrorOccurred called, exiting.");
+        System.exit(1);
     }
 
     @Override
