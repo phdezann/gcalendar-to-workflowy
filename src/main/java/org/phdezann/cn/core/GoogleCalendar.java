@@ -14,6 +14,7 @@ import org.apache.http.HttpStatus;
 import org.phdezann.cn.core.Config.ConfigKey;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarListEntry;
@@ -63,10 +64,10 @@ public class GoogleCalendar {
             var syncToken = syncTokenCache.get(calendarId);
             if (syncToken.isEmpty()) {
                 var nowMinus1Min = new DateTime(ZonedDateTime //
-                        .now() //
-                        .minusMinutes(1) //
-                        .withZoneSameInstant(ZoneId.of("UTC")) //
-                        .toEpochSecond() * 1000);
+                                                        .now() //
+                                                        .minusMinutes(1) //
+                                                        .withZoneSameInstant(ZoneId.of("UTC")) //
+                                                        .toEpochSecond() * 1000);
                 log.debug("Getting all events from {}", nowMinus1Min);
                 request.setUpdatedMin(nowMinus1Min);
             } else {
@@ -91,9 +92,13 @@ public class GoogleCalendar {
 
     private Calendar getService() {
         var credentials = googleClient.getCredentials();
-
+        HttpRequestInitializer requestInitializer = (com.google.api.client.http.HttpRequest request) -> {
+            credentials.initialize(request);
+            request.setConnectTimeout(10_000);
+            request.setReadTimeout(20_000);
+        };
         return new Calendar //
-                .Builder(credentials.getTransport(), credentials.getJsonFactory(), credentials) //
+                .Builder(credentials.getTransport(), credentials.getJsonFactory(), requestInitializer) //
                 .setApplicationName(GoogleClient.APPLICATION_NAME) //
                 .build();
     }
@@ -111,7 +116,7 @@ public class GoogleCalendar {
             doStopWatch(channelId, resourceId);
         } catch (IOException ex) {
             if (ex instanceof GoogleJsonResponseException json //
-                    && json.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                && json.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
                 log.info("Channel#{} not found, could not be stopped", channelId, ex);
                 return;
             }
