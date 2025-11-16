@@ -47,7 +47,7 @@ public class MqttSubscriber extends AbstractMqttSubscriber {
 
     private void processMessage(String topic, MqttMessage message) {
         var jsonPayload = new String(message.getPayload(), StandardCharsets.UTF_8);
-        log.trace("Received '{}' on topic '{}'", jsonPayload, topic);
+        log.debug("Received '{}' on topic '{}'", jsonPayload, topic);
         var payload = jsonSerializer.readValue(jsonPayload, Payload.class);
         this.eventCreator.onNotification(payload.channelId());
     }
