@@ -15,13 +15,11 @@ public class MqttClientCallback implements MqttCallback {
     @Override
     public void disconnected(MqttDisconnectResponse disconnectResponse) {
         log.error("disconnected called, exiting.");
-        System.exit(1);
     }
 
     @Override
     public void mqttErrorOccurred(MqttException exception) {
         log.error("mqttErrorOccurred called, exiting.");
-        System.exit(1);
     }
 
     @Override

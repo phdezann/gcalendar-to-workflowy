@@ -38,7 +38,6 @@ public class MqttSubscriber extends AbstractMqttSubscriber {
         } catch (Exception ex) {
             log.error("Got exception", ex);
             terminationLock.signalAbnormalTermination();
-            throw ex;
         }
     }
 
