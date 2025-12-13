@@ -33,7 +33,7 @@ public class PushNotificationRenewer {
         this.config = config;
         this.googleCalendar = googleCalendar;
         this.channelCache = channelCache;
-        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.scheduler = Executors.newScheduledThreadPool(2);
         this.channelLog = channelLog;
     }
 
@@ -49,11 +49,11 @@ public class PushNotificationRenewer {
     }
 
     private void renewIfExpired() {
-        if (!IOUtils.isUrlReachable("https://oauth2.googleapis.com")) {
-            log.debug("Cannot reach mandatory server for accessing Google's API, skipping");
-            return;
-        }
         try {
+            if (!IOUtils.isUrlReachable("https://oauth2.googleapis.com")) {
+                log.debug("Cannot reach mandatory server for accessing Google's API, skipping");
+                return;
+            }
             googleCalendar //
                     .getCalendars(config.get(ConfigKey.CALENDAR_TITLES)) //
                     .forEach(this::renewIfExpired);
