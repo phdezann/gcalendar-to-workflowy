@@ -31,7 +31,4 @@ public class AppArgs {
     @Parameter(names = "--init-tokens")
     private boolean initTokens;
 
-    @Parameter(names = "--clear-channels")
-    private boolean clearChannels;
-
 }

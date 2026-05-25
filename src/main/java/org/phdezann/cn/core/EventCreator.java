@@ -4,9 +4,7 @@ import static org.phdezann.cn.core.model.EventStatusEnum.CANCELLED;
 import static org.phdezann.cn.core.model.EventStatusEnum.OTHER;
 
 import java.io.File;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,29 +32,39 @@ public class EventCreator {
     private final AppArgs appArgs;
     private final Config config;
     private final GoogleCalendar googleCalendar;
-    private final ChannelCache channelCache;
     private final EventStatusEnumConverter eventStatusEnumConverter;
     private final EventConverter eventConverter;
     private final EventFormatter eventFormatter;
     private final WorkflowyClient workflowyClient;
     private final BulletCache bulletCache;
     private final JsonSerializer jsonSerializer;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    public synchronized void onNotification(String channelId) {
-        log.trace("Got notification for channelId#{}", channelId);
-        channelCache.getAllValues() //
-                .stream() //
-                .filter(cacheValue -> cacheValue.channelId().equals(channelId)) //
-                .findAny() //
-                .ifPresent(cacheValue -> createEvents(cacheValue.calendarId()));
+    public void startPolling() {
+        log.info("Starting calendar polling every 5 minutes");
+        pollSafely();
+        scheduler.scheduleWithFixedDelay(this::pollSafely, 5, 5, TimeUnit.MINUTES);
     }
 
-    public synchronized void createEventsOnStartup() {
-        log.info("Synchronizing events with no notification");
+    private void pollSafely() {
+        try {
+            syncAllCalendars();
+        } catch (Exception ex) {
+            log.error("Got error while polling calendars", ex);
+        }
+    }
+
+    public synchronized void syncAllCalendars() {
+        log.info("Synchronizing events by polling");
         googleCalendar //
                 .getCalendars(config.get(ConfigKey.CALENDAR_TITLES)) //
-                .forEach(this::createEvents);
+                .forEach(calendarId -> {
+                    try {
+                        createEvents(calendarId);
+                    } catch (Exception ex) {
+                        log.error("Got error while synchronizing calendar#{}", calendarId, ex);
+                    }
+                });
     }
 
     private void createEvents(String calendarId) {
@@ -145,25 +153,8 @@ public class EventCreator {
         bulletCache.set(new CacheValue(eventId, bulletId, workflowyBullet.title(), workflowyBullet.note()));
     }
 
-    public void setupEventsEveryDay() {
-        var now = ZonedDateTime.now();
-
-        var todayAt0630 = now //
-                .withHour(6) //
-                .withMinute(30) //
-                .withSecond(0) //
-                .withNano(0);
-        scheduleEveryDay(todayAt0630, this::createEventsOnStartup);
-    }
-
-    private void scheduleEveryDay(ZonedDateTime tick, Runnable command) {
-        var now = ZonedDateTime.now();
-        if (tick.isBefore(now)) {
-            tick = tick.plusDays(1);
-        }
-        var delay = Duration.between(now, tick).getSeconds();
-        var oneDayInSeconds = 60 * 60 * 24;
-        scheduler.scheduleWithFixedDelay(command, delay, oneDayInSeconds, TimeUnit.SECONDS);
+    public void shutdown() {
+        scheduler.shutdown();
     }
 
 }

@@ -1,24 +1,19 @@
 package org.phdezann.cn.core;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-import org.phdezann.cn.core.Config.ConfigKey;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.CalendarListEntry;
-import com.google.api.services.calendar.model.Channel;
 import com.google.api.services.calendar.model.Event;
 
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +54,10 @@ public class GoogleCalendar {
     }
 
     public List<Event> getEvents(String calendarId) {
+        return getEvents(calendarId, true);
+    }
+
+    private List<Event> getEvents(String calendarId, boolean allowTokenReset) {
         try {
             var request = calendar.events().list(calendarId);
             var syncToken = syncTokenCache.get(calendarId);
@@ -74,9 +73,34 @@ public class GoogleCalendar {
                 log.debug("Using previously received 'SyncToken' for calendar#{}", calendarId);
                 request.setSyncToken(syncToken.orElseThrow());
             }
-            var events = request.execute();
-            syncTokenCache.set(calendarId, events.getNextSyncToken());
-            return events.getItems();
+
+            var events = new ArrayList<Event>();
+            String pageToken = null;
+            String nextSyncToken = null;
+            do {
+                if (pageToken != null) {
+                    request.setPageToken(pageToken);
+                }
+                var response = request.execute();
+                var items = response.getItems();
+                if (items != null) {
+                    events.addAll(items);
+                }
+                pageToken = response.getNextPageToken();
+                nextSyncToken = response.getNextSyncToken();
+            } while (pageToken != null);
+
+            if (nextSyncToken != null) {
+                syncTokenCache.set(calendarId, nextSyncToken);
+            }
+            return events;
+        } catch (GoogleJsonResponseException ex) {
+            if (allowTokenReset && ex.getStatusCode() == HttpStatus.SC_GONE) {
+                log.info("Sync token for calendar#{} expired, resetting it", calendarId);
+                syncTokenCache.remove(calendarId);
+                return getEvents(calendarId, false);
+            }
+            throw new RuntimeException(ex);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -101,57 +125,6 @@ public class GoogleCalendar {
                 .Builder(credentials.getTransport(), credentials.getJsonFactory(), requestInitializer) //
                 .setApplicationName(GoogleClient.APPLICATION_NAME) //
                 .build();
-    }
-
-    public WatchResponse watch(String calendarId, ZonedDateTime expiration, String token) {
-        try {
-            return doWatch(calendarId, expiration, token);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    public void stopWatchIgnoreNotFoundError(String channelId, String resourceId) {
-        try {
-            doStopWatch(channelId, resourceId);
-        } catch (IOException ex) {
-            if (ex instanceof GoogleJsonResponseException json //
-                && json.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-                log.info("Channel#{} not found, could not be stopped", channelId, ex);
-                return;
-            }
-            throw new RuntimeException(ex);
-        }
-    }
-
-    public record WatchResponse(String channelId, String resourceId, ZonedDateTime expiration) {
-    }
-
-    private WatchResponse doWatch(String calendarId, ZonedDateTime expiration, String token) throws IOException {
-        var channel = new Channel();
-        channel.setAddress(config.get(ConfigKey.CALENDAR_WEBHOOK));
-        channel.setType("web_hook");
-        channel.setExpiration(expiration.toInstant().toEpochMilli());
-        channel.setId(UUID.randomUUID().toString());
-        channel.setToken(token);
-
-        var result = calendar.events().watch(calendarId, channel).execute();
-
-        var utc = ZoneId.of("UTC");
-        var expirationInResponse = LocalDateTime //
-                .ofInstant(Instant.ofEpochMilli(result.getExpiration()), utc).atZone(utc) //
-                .withZoneSameInstant(ZoneId.of("Europe/Paris"));
-
-        return new WatchResponse(result.getId(), result.getResourceId(), expirationInResponse);
-    }
-
-    private void doStopWatch(String channelId, String resourceId) throws IOException {
-        var channel = new Channel();
-        channel.setId(channelId);
-        channel.setResourceId(resourceId);
-
-        calendar.channels().stop(channel).execute();
-        log.debug("Stopped channel#{}", channelId);
     }
 
 }

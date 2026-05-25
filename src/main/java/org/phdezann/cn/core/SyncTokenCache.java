@@ -54,6 +54,11 @@ public class SyncTokenCache {
         persist();
     }
 
+    public void remove(String key) {
+        cacheContent.getEntries().remove(key);
+        persist();
+    }
+
     private void persist() {
         var json = jsonSerializer.writeValue(cacheContent);
         FileUtils.write(getCacheFile(), json);

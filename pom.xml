@@ -35,11 +35,6 @@
             <artifactId>google-api-services-calendar</artifactId>
             <version>v3-rev411-1.25.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.paho</groupId>
-            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
-            <version>1.2.5</version>
-        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

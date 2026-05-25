@@ -16,12 +16,6 @@ public class Config {
 
     @SuppressWarnings("unused")
     public enum ConfigKey {
-        MQTT_HOSTNAME,
-        MQTT_USERNAME,
-        MQTT_PASSWORD,
-        MQTT_TOPIC,
-        CALENDAR_WEBHOOK,
-        CALENDAR_WEBHOOK_TOKEN,
         CALENDAR_TITLES,
         ENABLE_HOSTNAME_IN_TITLE,
         WORKFLOWY_SHARE_SECRET_LINK,
